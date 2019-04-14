@@ -1,0 +1,106 @@
+openapi: "3.0.1"
+info:
+  description: "rest api for emulator of elevator"
+  version: "0.0.1"
+  title: "Elevator api"
+  contact:
+    email: "11sanach11@gmail.com"
+servers:
+  - url: http://localhost:8085/elevator/v1
+
+paths:
+  /elevators:
+    get:
+      operationId: getAll
+      tags:
+        - elevators
+      description: get info by all elevators in the building
+      responses:
+        '200':
+          description: 'ok'
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Elevator'
+  /elevators/{id}:
+    get:
+      operationId: getById
+      tags:
+        - elevators
+      description: get info about elevator by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: the elevator ID
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Elevator'
+  /elevators/{id}/position:
+    get:
+      operationId: getPositionById
+      tags:
+        - elevators
+      description: get position of the elevator with id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: the elevator ID
+      responses:
+        '200':
+          description: 'OK'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Position'
+
+components:
+  schemas:
+    Elevator:
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        maxWeight:
+          type: integer
+          format: int32
+          minimum: 0
+        type:
+          type: string
+          enum: [FREIGHT, PASSENGER]
+        speedByFloor:
+          type: integer
+          format: int32
+          description: time in seconds which elevator can go the distance between floors
+          minimum: 1
+          maximum: 100
+        changeStateDuration:
+          type: integer
+          format: int32
+          description: time in seconds which elevator change own state
+          minimum: 1
+          maximum: 100
+
+
+    Position:
+      properties:
+        state:
+          type: string
+          description: type of work
+          enum: [UP, DOWN, STAY]
+        nextFloor:
+          type: integer
+        previousFloor:
+          type: integer

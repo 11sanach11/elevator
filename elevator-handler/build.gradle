@@ -1,0 +1,59 @@
+plugins {
+    id 'org.springframework.boot' version '2.1.4.RELEASE'
+    id 'java'
+}
+
+apply plugin: 'idea'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'org.openapi.generator'
+
+File genClientSrc = file("$buildDir/generated/client/src/main/java")
+sourceSets.main.java.srcDir genClientSrc
+idea.module.generatedSourceDirs += genClientSrc
+
+openApiGenerate {
+    generatorName = "java"
+    library = "retrofit2"
+    inputSpec = "$rootDir/specs/elevator/elevator.yaml".toString()
+    outputDir = "$buildDir/generated/client".toString()
+    apiPackage = "men.chikagostory.elevator.api"
+    invokerPackage = "men.chikagostory.elevator.invoker"
+    modelPackage = "men.chikagostory.elevator.model"
+    configOptions = [
+            dateLibrary: "java8"
+    ]
+}
+
+ext {
+    set('vaadinVersion', '13.0.3')
+    oltu_version = "1.0.1"
+    retrofit_version = "2.3.0"
+    swagger_annotations_version = "1.5.21"
+    junit_version = "4.12"
+    json_fire_version = "1.8.0"
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-rest'
+    implementation 'com.vaadin:vaadin-spring-boot-starter'
+    compile "com.squareup.retrofit2:retrofit:$retrofit_version"
+    compile "com.squareup.retrofit2:converter-scalars:$retrofit_version"
+    compile "com.squareup.retrofit2:converter-gson:$retrofit_version"
+    compile "io.swagger:swagger-annotations:$swagger_annotations_version"
+    compile("org.apache.oltu.oauth2:org.apache.oltu.oauth2.client:$oltu_version") {
+        exclude group: 'org.apache.oltu.oauth2', module: 'org.apache.oltu.oauth2.common'
+    }
+    compile "io.gsonfire:gson-fire:$json_fire_version"
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo'
+}
+
+compileJava {
+    dependsOn tasks.openApiGenerate
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "com.vaadin:vaadin-bom:${vaadinVersion}"
+    }
+}

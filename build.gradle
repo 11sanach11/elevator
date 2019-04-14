@@ -1,0 +1,26 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+    dependencies {
+        classpath "org.openapitools:openapi-generator-gradle-plugin:3.3.4"
+    }
+}
+
+plugins {
+    id 'java'
+}
+allprojects {
+    group = 'men.chikagostory'
+    version = '0.0.1'
+    sourceCompatibility = '1.8'
+
+    repositories {
+        jcenter() 
+    }
+}
+subprojects {
+}
+
+
