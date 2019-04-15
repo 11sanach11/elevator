@@ -1,20 +1,22 @@
 package men.chikagostory.elevator;
 
-import men.chikagostory.elevator.internal.ElevatorUtils;
-import men.chikagostory.elevator.internal.domain.MotionInfo;
-import men.chikagostory.elevator.model.Elevator;
-import men.chikagostory.elevator.model.Position;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
-
-import javax.annotation.PostConstruct;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.BiFunction;
+
+import javax.annotation.PostConstruct;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
+
+import men.chikagostory.elevator.internal.ElevatorUtils;
+import men.chikagostory.elevator.internal.domain.MotionInfo;
+import men.chikagostory.elevator.model.Elevator;
+import men.chikagostory.elevator.model.Position;
 
 /**
  * Класс должен эмулировать движение лифта. При инициализации ему задаются параметры, в соответствии с которыми, при участии рандома, кабина "инициализирует"
@@ -54,6 +56,12 @@ public class ElevatorStub {
      * Флаг, если установлен, поток при следующей работе завершит свою работу
      */
     private boolean stopEmulation;
+
+    /**
+     * Кабину, если очередь ее посещений пуста, можно поставить на паузу. Стоять она на паузе будет до тех пор, пока ее не сделают resume или не
+     * остановят эмуляцию.
+     */
+    private boolean onPause = false;
 
     private BiFunction<Integer, Integer, MotionInfo> initMotionFunc = null;
 
@@ -117,21 +125,23 @@ public class ElevatorStub {
                             } else {
                                 if (state.getState() == Position.StateEnum.STAY) {
                                     // для состояния остановки нужно поменять состояние и поменять следующий этаж.
+                                    int koef = 0;
                                     if (state.getNextFloor() < nextDestination) {
                                         //лифт едет вверх
                                         state.setState(Position.StateEnum.UP);
-                                        state.setNextFloor(state.getNextFloor() + 1);
+                                        koef = 1;
                                     } else if (nextDestination < state.getNextFloor()) {
                                         //лифт едет вниз
                                         state.setState(Position.StateEnum.DOWN);
-                                        state.setNextFloor(state.getNextFloor() - 1);
+                                        koef = -1;
                                     }
+                                    state.setNextFloor(state.getNextFloor() + koef);
                                     state.setDelay(speedByFloor);
                                 } else {
                                     //иначе нужно "подвинуть" текущие этажи
                                     int koef = state.getState() == Position.StateEnum.UP ? 1 : -1;
-                                    state.setNextFloor(state.getNextFloor() + 1 * koef);
-                                    state.setPreviousFloor(state.getPreviousFloor() + 1 * koef);
+                                    state.setNextFloor(state.getNextFloor() + koef);
+                                    state.setPreviousFloor(state.getPreviousFloor() + koef);
                                     state.setDelay(speedByFloor);
                                 }
                             }
@@ -139,6 +149,11 @@ public class ElevatorStub {
                         });
                         log.trace("State for #{}: {}", id, newState);
                         Thread.sleep(newState.getDelay());
+                    }
+                    //Проверяю, может лифт на паузе...
+                    while (onPause && !stopEmulation) {
+                        log.info("set stub #{} on pause.");
+                        LockSupport.park();
                     }
                     //Если больше этажей нет - ждем внешних событий на их добавление.
                     LockSupport.park();
