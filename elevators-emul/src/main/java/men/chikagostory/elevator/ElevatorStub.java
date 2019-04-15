@@ -1,22 +1,22 @@
 package men.chikagostory.elevator;
 
-import java.util.Objects;
-import java.util.Optional;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.LockSupport;
-import java.util.function.BiFunction;
-
-import javax.annotation.PostConstruct;
-
+import com.google.common.collect.Lists;
+import men.chikagostory.elevator.internal.ElevatorUtils;
+import men.chikagostory.elevator.internal.domain.MotionInfo;
+import men.chikagostory.elevator.model.Elevator;
+import men.chikagostory.elevator.model.Position;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
-import men.chikagostory.elevator.internal.ElevatorUtils;
-import men.chikagostory.elevator.internal.domain.MotionInfo;
-import men.chikagostory.elevator.model.Elevator;
-import men.chikagostory.elevator.model.Position;
+import javax.annotation.PostConstruct;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.LockSupport;
+import java.util.function.BiFunction;
 
 /**
  * Класс должен эмулировать движение лифта. При инициализации ему задаются параметры, в соответствии с которыми, при участии рандома, кабина "инициализирует"
@@ -25,7 +25,10 @@ import men.chikagostory.elevator.model.Position;
 public class ElevatorStub {
 
     private static final Logger log = LoggerFactory.getLogger(ElevatorStub.class);
-
+    /**
+     * Список слушателей, подписанных на событие следующего шага кабины.
+     */
+    private List<NextStepListener> nextStepListeners = Lists.newArrayList();
     private int id;
     private String name;
     private int maxWeight;
@@ -45,24 +48,21 @@ public class ElevatorStub {
      * За это время кабина проезжает один этаж
      */
     private int speedByFloor;
-
     private Elevator.TypeEnum type;
-
     private AtomicReference<MotionInfo> currentState = new AtomicReference<>();
-
     private Thread emulationThread;
-
     /**
      * Флаг, если установлен, поток при следующей работе завершит свою работу
      */
     private boolean stopEmulation;
-
     /**
      * Кабину, если очередь ее посещений пуста, можно поставить на паузу. Стоять она на паузе будет до тех пор, пока ее не сделают resume или не
      * остановят эмуляцию.
      */
     private boolean onPause = false;
-
+    /**
+     * В переменной можно задать функцию, которая будет выполняться при инициализации класса. По умолчанию выполняется код из {@link ElevatorUtils}
+     */
     private BiFunction<Integer, Integer, MotionInfo> initMotionFunc = null;
 
     public ElevatorStub(int id, String name, int maxWeight, int firstFloor, int lastFloor, int changeStateDuration, int speedByFloor, Elevator.TypeEnum type) {
@@ -148,6 +148,7 @@ public class ElevatorStub {
                             return state;
                         });
                         log.trace("State for #{}: {}", id, newState);
+                        nextStepListeners.forEach(listener -> listener.onNextStep(newState));
                         Thread.sleep(newState.getDelay());
                     }
                     //Если больше этажей нет - ждем внешних событий на их добавление.
@@ -209,6 +210,20 @@ public class ElevatorStub {
         log.info("Resume emulation for #{}", id);
         onPause = false;
         LockSupport.unpark(emulationThread);
+    }
+
+    public void addNextStepListener(NextStepListener listener) {
+        Assert.notNull(listener, "Listener can't be null");
+        nextStepListeners.add(listener);
+    }
+
+    public void removeNextStepListener(NextStepListener listener) {
+        Assert.notNull(listener, "Listener can't be null");
+        nextStepListeners.remove(listener);
+    }
+
+    public interface NextStepListener {
+        void onNextStep(MotionInfo info);
     }
 
 }

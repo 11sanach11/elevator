@@ -7,6 +7,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,11 +40,14 @@ public class ElevatorStubTest {
             motionInfo.setState(Position.StateEnum.STAY);
             return motionInfo;
         });
+        CountDownLatch waitExecution = new CountDownLatch(3);
+        elevatorStub.addNextStepListener(motionInfo -> waitExecution.countDown());
         elevatorStub.startEmulation();
-        Thread.sleep(100);
+        waitExecution.await(300, TimeUnit.MILLISECONDS);
         Position position = elevatorStub.getPosition();
         assertEquals(Position.StateEnum.STAY, position.getState(), "Wrong state for elevator");
         assertEquals(destFloor.get(), position.getNextFloor().intValue(), "Wrong floor");
+
     }
 
     @AfterEach
