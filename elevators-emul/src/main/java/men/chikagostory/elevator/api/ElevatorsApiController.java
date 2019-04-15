@@ -1,17 +1,21 @@
 package men.chikagostory.elevator.api;
 
-import com.google.common.collect.Lists;
-import men.chikagostory.elevator.ElevatorStub;
-import men.chikagostory.elevator.model.Elevator;
-import men.chikagostory.elevator.model.Position;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.Assert;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.context.request.NativeWebRequest;
 
-import java.util.List;
-import java.util.Optional;
+import com.google.common.collect.Lists;
+
+import men.chikagostory.elevator.ElevatorStub;
+import men.chikagostory.elevator.model.Elevator;
+import men.chikagostory.elevator.model.Position;
 
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.SpringCodegen", date = "2019-04-14T14:11:53.971+07:00[Asia/Barnaul]")
 
@@ -35,16 +39,21 @@ public class ElevatorsApiController implements ElevatorsApi {
         return Optional.ofNullable(request);
     }
 
+    private ElevatorStub getElevator(Integer id) {
+        Assert.isTrue(id == 1 || id == 2, "Support only '1' and '2' ids");
+        switch (id) {
+        case 1:
+            return passengerElevator;
+        case 2:
+            return freightElevator;
+        default:
+            return null;
+        }
+    }
+
     @Override
     public ResponseEntity<Elevator> getById(Integer id) {
-        switch (id) {
-            case 1:
-                return ResponseEntity.ok(passengerElevator.getElevatorModel());
-            case 2:
-                return ResponseEntity.ok(freightElevator.getElevatorModel());
-            default:
-                return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity.ok(getElevator(id).getElevatorModel());
     }
 
     @Override
@@ -54,13 +63,13 @@ public class ElevatorsApiController implements ElevatorsApi {
 
     @Override
     public ResponseEntity<Position> getPositionById(Integer id) {
-        switch (id) {
-            case 1:
-                return ResponseEntity.ok(passengerElevator.getPosition());
-            case 2:
-                return ResponseEntity.ok(freightElevator.getPosition());
-            default:
-                return ResponseEntity.badRequest().build();
-        }
+        return ResponseEntity.ok(getElevator(id).getPosition());
+    }
+
+    @Override
+    public ResponseEntity<Void> setPositionForId(Integer id, Integer floor) {
+        ElevatorStub elevatorStub = getElevator(id);
+        elevatorStub.addNewDestination(floor);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 }

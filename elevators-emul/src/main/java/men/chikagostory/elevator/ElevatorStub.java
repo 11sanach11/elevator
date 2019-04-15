@@ -150,12 +150,12 @@ public class ElevatorStub {
                         log.trace("State for #{}: {}", id, newState);
                         Thread.sleep(newState.getDelay());
                     }
-                    //Проверяю, может лифт на паузе...
-                    while (onPause && !stopEmulation) {
-                        log.info("set stub #{} on pause.");
-                        LockSupport.park();
-                    }
                     //Если больше этажей нет - ждем внешних событий на их добавление.
+                    if (onPause) {
+                        log.info("#{} on pause mode...", id);
+                    } else {
+                        log.trace("#{} - wait new destionations...", id);
+                    }
                     LockSupport.park();
                 }
             } catch (InterruptedException e) {
@@ -181,7 +181,9 @@ public class ElevatorStub {
             }
             return current;
         });
-        LockSupport.unpark(emulationThread);
+        if (!onPause) {
+            LockSupport.unpark(emulationThread);
+        }
     }
 
     public Elevator getElevatorModel() {
@@ -195,6 +197,17 @@ public class ElevatorStub {
 
     public void stopEmulation() {
         this.stopEmulation = true;
+        LockSupport.unpark(emulationThread);
+    }
+
+    public void pause() {
+        log.info("On pause request for #{} - waiting...", id);
+        onPause = true;
+    }
+
+    public void resume() {
+        log.info("Resume emulation for #{}", id);
+        onPause = false;
         LockSupport.unpark(emulationThread);
     }
 

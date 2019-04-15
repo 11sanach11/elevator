@@ -64,6 +64,29 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Position'
+  /elevators/{id}/position/new/{floor}:
+    put:
+      operationId: setPositionForId
+      tags:
+        - elevators
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: the elevator ID
+        - in: path
+          name: floor
+          required: true
+          schema:
+            type: integer
+          description: add new destinated floor
+      responses:
+        '201':
+          description: 'OK'
+        '400':
+          description: 'Bad request'
 
 components:
   schemas:
