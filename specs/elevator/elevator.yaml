@@ -106,13 +106,13 @@ components:
         speedByFloor:
           type: integer
           format: int32
-          description: time in seconds which elevator can go the distance between floors
+          description: time in milliseconds which elevator can go the distance between floors
           minimum: 1
           maximum: 100
         changeStateDuration:
           type: integer
           format: int32
-          description: time in seconds which elevator change own state
+          description: time in milliseconds which elevator change own state
           minimum: 1
           maximum: 100
 
