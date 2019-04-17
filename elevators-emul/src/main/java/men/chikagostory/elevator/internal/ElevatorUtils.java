@@ -1,12 +1,20 @@
 package men.chikagostory.elevator.internal;
 
+import java.util.LinkedList;
+import java.util.function.BiFunction;
+import java.util.function.ObjIntConsumer;
+
+import org.apache.commons.lang3.RandomUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import men.chikagostory.elevator.internal.domain.MotionInfo;
 import men.chikagostory.elevator.model.Position;
-import org.apache.commons.lang3.RandomUtils;
-
-import java.util.function.BiFunction;
 
 public class ElevatorUtils {
+
+    private static final Logger log = LoggerFactory.getLogger(ElevatorUtils.class);
+
     private ElevatorUtils() {
         //do nothing
     }
@@ -54,5 +62,11 @@ public class ElevatorUtils {
             }
         }
         return info;
+    };
+
+    public static ObjIntConsumer<LinkedList<Integer>> addDestinationFloorSupplier = (destinationQueue, addingFloor) -> {
+        //хитрый алгоритм добавления этажа по "пути", если это возможно, а пока просто добавляю этаж в конец, что конечно неправильно
+        log.warn("хитрый алгоритм добавления этажа по \"пути\", если это возможно, а пока просто добавляю этаж в конец, что конечно неправильно");
+        destinationQueue.add(addingFloor);
     };
 }
