@@ -13,12 +13,16 @@ import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.spring.annotation.SpringComponent;
+import men.chikagostory.elevator.service.ElevatorHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
 import java.util.Objects;
 
+@SpringComponent
 @Route("ui")
 public class MainView extends HorizontalLayout {
 
@@ -26,6 +30,7 @@ public class MainView extends HorizontalLayout {
     private int firstFloor = 1;
     private int lastFloor = 15;
 
+    @Autowired
     public MainView() {
 
         Map<Component, BiMap<Button, Integer>> buttonsMap = Maps.newHashMap();
@@ -75,4 +80,5 @@ public class MainView extends HorizontalLayout {
             }
         }
     }
+
 }
