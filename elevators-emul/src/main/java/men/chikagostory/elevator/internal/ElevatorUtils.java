@@ -1,23 +1,16 @@
 package men.chikagostory.elevator.internal;
 
-import java.util.LinkedList;
-import java.util.function.BiFunction;
-import java.util.function.ObjIntConsumer;
-
+import men.chikagostory.elevator.internal.domain.MotionInfo;
+import men.chikagostory.elevator.model.DirectionForFloorDestination;
+import men.chikagostory.elevator.model.Position;
 import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import men.chikagostory.elevator.internal.domain.MotionInfo;
-import men.chikagostory.elevator.model.Position;
+import java.util.LinkedList;
+import java.util.function.BiFunction;
 
 public class ElevatorUtils {
-
-    private static final Logger log = LoggerFactory.getLogger(ElevatorUtils.class);
-
-    private ElevatorUtils() {
-        //do nothing
-    }
 
     /**
      * При инициализации лифта рандомно выбирается текущий этаж, направление движения (или режим остановки), а также этаж, на который лифт движется
@@ -63,10 +56,21 @@ public class ElevatorUtils {
         }
         return info;
     };
+    private static final Logger log = LoggerFactory.getLogger(ElevatorUtils.class);
 
-    public static ObjIntConsumer<LinkedList<Integer>> addDestinationFloorSupplier = (destinationQueue, addingFloor) -> {
+    private ElevatorUtils() {
+        //do nothing
+    }
+
+    /**
+     * Поведение, которое будет использоваться при добавлении нового этажа в очередь лифта. По умолчанию выполняется код из {@link ElevatorUtils}
+     */
+    public static void addDestinationFloor(LinkedList<Integer> destinationQueue, int addingFloor, Position.StateEnum currentState,
+                                           DirectionForFloorDestination requestDirection) {
         //хитрый алгоритм добавления этажа по "пути", если это возможно, а пока просто добавляю этаж в конец, что конечно неправильно
         log.warn("хитрый алгоритм добавления этажа по \"пути\", если это возможно, а пока просто добавляю этаж в конец, что конечно неправильно");
         destinationQueue.add(addingFloor);
-    };
+    }
+
+    ;
 }

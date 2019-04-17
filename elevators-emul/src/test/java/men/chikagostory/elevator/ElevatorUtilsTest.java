@@ -2,6 +2,7 @@ package men.chikagostory.elevator;
 
 import java.util.LinkedList;
 
+import men.chikagostory.elevator.model.Position;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ public class ElevatorUtilsTest {
 
     @Test
     public void addFloorInEmptyQueue() {
-        ElevatorUtils.addDestinationFloorSupplier.accept(queueDestination, 10);
+        ElevatorUtils.addDestinationFloor(queueDestination, 10, Position.StateEnum.STAY);
         Assertions.assertEquals(1, queueDestination.size(), "must be exactly one item");
     }
 }

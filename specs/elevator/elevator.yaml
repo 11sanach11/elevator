@@ -82,6 +82,12 @@ paths:
           schema:
             type: integer
           description: add new destinated floor
+        - in: query
+          name: direction
+          required: false
+          description: direction for request
+          schema:
+            $ref: "#/components/schemas/DirectionForFloorDestination"
       responses:
         '201':
           description: 'OK'
@@ -90,6 +96,12 @@ paths:
 
 components:
   schemas:
+    DirectionForFloorDestination:
+      type: string
+      enum:
+        - UP
+        - DOWN
+        - NO_MATTER
     Elevator:
       properties:
         id:

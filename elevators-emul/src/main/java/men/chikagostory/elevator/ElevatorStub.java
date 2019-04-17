@@ -1,27 +1,23 @@
 package men.chikagostory.elevator;
 
-import java.util.LinkedList;
+import com.google.common.collect.Lists;
+import men.chikagostory.elevator.internal.ElevatorUtils;
+import men.chikagostory.elevator.internal.domain.MotionInfo;
+import men.chikagostory.elevator.model.DirectionForFloorDestination;
+import men.chikagostory.elevator.model.Elevator;
+import men.chikagostory.elevator.model.Position;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
+
+import javax.annotation.PostConstruct;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.BiFunction;
-import java.util.function.ObjIntConsumer;
-
-import javax.annotation.PostConstruct;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
-
-import com.google.common.collect.Lists;
-
-import men.chikagostory.elevator.internal.ElevatorUtils;
-import men.chikagostory.elevator.internal.domain.MotionInfo;
-import men.chikagostory.elevator.model.Elevator;
-import men.chikagostory.elevator.model.Position;
 
 /**
  * Класс должен эмулировать движение лифта. При инициализации ему задаются параметры, в соответствии с которыми, при участии рандома, кабина "инициализирует"
@@ -69,10 +65,6 @@ public class ElevatorStub {
      * В переменной можно задать функцию, которая будет выполняться при инициализации класса. По умолчанию выполняется код из {@link ElevatorUtils}
      */
     private BiFunction<Integer, Integer, MotionInfo> initMotionFunc = null;
-    /**
-     * Поведение, которое будет использоваться при добавлении нового этажа в очередь лифта. По умолчанию выполняется код из {@link ElevatorUtils}
-     */
-    private ObjIntConsumer<LinkedList<Integer>> addFloorConsumer = null;
 
     public ElevatorStub(int id, String name, int maxWeight, int firstFloor, int lastFloor, int changeStateDuration, int speedByFloor, Elevator.TypeEnum type) {
         Assert.isTrue(lastFloor - firstFloor >= 2, "minimai count of floors in building is 2");
@@ -88,10 +80,6 @@ public class ElevatorStub {
 
     public void setInitMotionFunc(BiFunction<Integer, Integer, MotionInfo> initMotionFunc) {
         this.initMotionFunc = initMotionFunc;
-    }
-
-    public void setAddFloorConsumer(ObjIntConsumer<LinkedList<Integer>> addFloorConsumer) {
-        this.addFloorConsumer = addFloorConsumer;
     }
 
     @PostConstruct
@@ -182,15 +170,12 @@ public class ElevatorStub {
         return this;
     }
 
-    public void addNewDestination(int toFloor) {
+    public void addNewDestination(int toFloor, DirectionForFloorDestination direction) {
         Assert.isTrue(toFloor >= firstFloor, "can't go underground");
         Assert.isTrue(toFloor <= lastFloor, "can't go to the sky");
         Assert.notNull(emulationThread, "Emulation thread is null, it's impossible");
         currentState.updateAndGet(current -> {
-            //Если добавляемый этаж совпадает с последним - нет смысла его добавлять - на нем и так будет остановка
-            if (!Objects.equals(current.getDestinationQueue().peekLast(), toFloor)) {
-                Optional.ofNullable(addFloorConsumer).orElse(ElevatorUtils.addDestinationFloorSupplier).accept(current.getDestinationQueue(), toFloor);
-            }
+            ElevatorUtils.addDestinationFloor(current.getDestinationQueue(), toFloor, current.getState(), direction);
             return current;
         });
         if (!onPause) {
