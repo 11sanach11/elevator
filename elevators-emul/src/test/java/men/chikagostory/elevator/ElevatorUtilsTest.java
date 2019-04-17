@@ -1,15 +1,14 @@
 package men.chikagostory.elevator;
 
-import java.util.LinkedList;
-
+import com.google.common.collect.Lists;
+import men.chikagostory.elevator.internal.ElevatorUtils;
+import men.chikagostory.elevator.model.DirectionForFloorDestination;
 import men.chikagostory.elevator.model.Position;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import com.google.common.collect.Lists;
-
-import men.chikagostory.elevator.internal.ElevatorUtils;
+import java.util.LinkedList;
 
 public class ElevatorUtilsTest {
 
@@ -22,7 +21,7 @@ public class ElevatorUtilsTest {
 
     @Test
     public void addFloorInEmptyQueue() {
-        ElevatorUtils.addDestinationFloor(queueDestination, 10, Position.StateEnum.STAY);
+        ElevatorUtils.addDestinationFloor(queueDestination, 10, Position.StateEnum.STAY, DirectionForFloorDestination.NO_MATTER);
         Assertions.assertEquals(1, queueDestination.size(), "must be exactly one item");
     }
 }
