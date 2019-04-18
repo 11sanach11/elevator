@@ -8,6 +8,10 @@ import java.util.LinkedList;
 @Data
 public class MotionInfo {
     /**
+     * ID лифта
+     */
+    private int id;
+    /**
      * Режим, в котром находится кабина
      */
     private Position.StateEnum state;

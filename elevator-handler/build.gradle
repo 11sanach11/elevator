@@ -34,9 +34,10 @@ ext {
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-data-rest'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'com.vaadin:vaadin-spring-boot-starter'
     compile 'com.google.guava:guava:23.0'
+    compile 'org.projectlombok:lombok:1.16.20'
     compile "com.squareup.retrofit2:retrofit:$retrofit_version"
     compile "com.squareup.retrofit2:converter-scalars:$retrofit_version"
     compile "com.squareup.retrofit2:converter-gson:$retrofit_version"
@@ -46,7 +47,6 @@ dependencies {
     }
     compile "io.gsonfire:gson-fire:$json_fire_version"
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'de.flapdoodle.embed:de.flapdoodle.embed.mongo'
 }
 
 compileJava {

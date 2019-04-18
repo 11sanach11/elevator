@@ -21,7 +21,7 @@ openApiGenerate {
 tasks.openApiGenerate{
     doFirst {
         mkdir("$buildDir/generated/server/")
-        new File("$buildDir/generated/server/.openapi-generator-ignore").text = "**/*ApiController.java\n"
+        new File("$buildDir/generated/server/.openapi-generator-ignore").text = "**/*ApiController.java\n**/OpenAPI2SpringBoot.java\n"
     }
 }
 

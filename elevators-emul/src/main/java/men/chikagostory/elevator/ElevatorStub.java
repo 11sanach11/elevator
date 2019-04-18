@@ -87,6 +87,7 @@ public class ElevatorStub {
         stopEmulation = false;
         emulationThread = new Thread(() -> {
             MotionInfo info = Optional.ofNullable(initMotionFunc).orElse(ElevatorUtils.randomMotionInfo).apply(firstFloor, lastFloor);
+            info.setId(id);
             log.info("Start state for elevator #{} {}: {}", id, name, info);
             currentState.set(info);
             try {
@@ -149,7 +150,13 @@ public class ElevatorStub {
                             return state;
                         });
                         log.trace("State for #{}: {}", id, newState);
-                        nextStepListeners.forEach(listener -> listener.onNextStep(newState));
+                        nextStepListeners.forEach(listener -> {
+                            try {
+                                listener.onNextStep(newState);
+                            } catch (Exception e) {
+                                log.warn("Exception while execute listener: ", e);
+                            }
+                        });
                         Thread.sleep(newState.getDelay());
                     }
                     //Если больше этажей нет - ждем внешних событий на их добавление.

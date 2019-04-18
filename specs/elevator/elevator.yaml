@@ -98,9 +98,55 @@ paths:
           description: 'OK'
         '400':
           description: 'Bad request'
-
+  /elevators/events/subscribe:
+    post:
+      operationId: subscribe on elevator events
+      tags:
+        - elevators
+      summary: Subscribe to a webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                callbackUrl:   # Callback URL
+                  type: string
+                  format: uri
+                  example: http://myserver.com/send/callback/here
+              required:
+                - callbackUrl
+      callbacks:
+        elevatorEvent:
+          '{$request.body#/callbackUrl}':
+            post:
+              requestBody:   # Contents of the callback message
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: "#/components/schemas/ElevatorEvent"
+              responses:
+                '200':
+                  description: Your server returns this code if it accepts the callback
+      responses:
+        '201':
+          description: Webhook created
 components:
   schemas:
+    ElevatorEvent:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: id of elevator
+        onFloor:
+          type: integer
+          description: current floor
+        description:
+          type: string
+          description: log message
     DirectionForFloorDestination:
       type: string
       enum:
@@ -132,8 +178,6 @@ components:
           description: time in milliseconds which elevator change own state
           minimum: 1
           maximum: 100
-
-
     Position:
       properties:
         state:

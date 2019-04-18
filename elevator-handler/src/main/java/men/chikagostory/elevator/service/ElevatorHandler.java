@@ -19,9 +19,8 @@ public class ElevatorHandler {
     private MainView mainView;
 
     @Autowired
-    public ElevatorHandler(ElevatorsApi elevatorsApi, MainView mainView) {
+    public ElevatorHandler(ElevatorsApi elevatorsApi) {
         this.elevatorsApi = elevatorsApi;
-        this.mainView = mainView;
     }
 
     @PostConstruct

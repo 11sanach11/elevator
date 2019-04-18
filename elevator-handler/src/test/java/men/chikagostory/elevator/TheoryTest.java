@@ -1,11 +1,11 @@
 package men.chikagostory.elevator;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.concurrent.locks.LockSupport;
 
 public class TheoryTest {
+
     public static void main(String[] args) throws InterruptedException {
+
         Thread parked = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -32,4 +32,5 @@ public class TheoryTest {
         Thread.sleep(1000);
         System.out.println(4);
     }
+
 }
