@@ -87,7 +87,12 @@ paths:
           required: false
           description: direction for request
           schema:
-            $ref: "#/components/schemas/DirectionForFloorDestination"
+            type: string
+            default: NO_MATTER
+            enum:
+              - UP
+              - DOWN
+              - NO_MATTER
       responses:
         '201':
           description: 'OK'
