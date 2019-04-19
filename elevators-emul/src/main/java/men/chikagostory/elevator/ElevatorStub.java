@@ -191,7 +191,8 @@ public class ElevatorStub {
     }
 
     public Elevator getElevatorModel() {
-        return new Elevator().id(id).name(name).maxWeight(maxWeight).speedByFloor(speedByFloor).changeStateDuration(changeStateDuration).type(type);
+        return new Elevator().id(id).name(name).maxWeight(maxWeight).speedByFloor(speedByFloor).changeStateDuration(changeStateDuration).type(type).
+                firstFloor(firstFloor).lastFloor(lastFloor);
     }
 
     public Position getPosition() {

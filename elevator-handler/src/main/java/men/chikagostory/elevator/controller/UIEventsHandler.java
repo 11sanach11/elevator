@@ -7,12 +7,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import men.chikagostory.elevator.model.ElevatorEvent;
-import men.chikagostory.elevator.ui.vaadin.MainView;
+import men.chikagostory.elevator.ui.vaadin.SimulationView;
 
 @RestController()
 public class UIEventsHandler {
 
-    private MainView mainView;
+    private SimulationView mainView;
 
     public UIEventsHandler() {
     }
@@ -23,7 +23,7 @@ public class UIEventsHandler {
         Optional.ofNullable(mainView).ifPresent(view -> view.updateFloorForElevator(elevatorEvent));
     }
 
-    public void setMainView(MainView mainView) {
+    public void setMainView(SimulationView mainView) {
         this.mainView = mainView;
     }
 }

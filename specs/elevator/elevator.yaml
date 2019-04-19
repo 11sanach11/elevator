@@ -168,6 +168,10 @@ components:
           type: integer
           format: int32
           minimum: 0
+        firstFloor:
+          type: integer
+        lastFloor:
+          type: integer
         type:
           type: string
           enum: [FREIGHT, PASSENGER]
