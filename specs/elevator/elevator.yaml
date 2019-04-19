@@ -115,8 +115,13 @@ paths:
                   type: string
                   format: uri
                   example: http://myserver.com/send/callback/here
+                id:
+                  type: string
+                  description: unique id of current subsriber. For new request from available id previouse will be remove
+                  example: somestringwithouhtspaceandspecificsymbols
               required:
                 - callbackUrl
+                - id
       callbacks:
         elevatorEvent:
           '{$request.body#/callbackUrl}':

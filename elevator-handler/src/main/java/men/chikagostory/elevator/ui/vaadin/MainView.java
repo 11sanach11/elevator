@@ -1,9 +1,19 @@
 package men.chikagostory.elevator.ui.vaadin;
 
+import java.io.IOException;
+import java.util.Map;
+import java.util.Objects;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Maps;
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEventListener;
@@ -14,21 +24,17 @@ import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.Route;
+import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.spring.annotation.SpringComponent;
+import com.vaadin.flow.spring.annotation.UIScope;
+
 import men.chikagostory.elevator.api.ElevatorsApi;
+import men.chikagostory.elevator.controller.UIEventsHandler;
 import men.chikagostory.elevator.model.ElevatorEvent;
 import men.chikagostory.elevator.model.InlineObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import retrofit2.Response;
-
-import java.io.IOException;
-import java.util.Map;
-import java.util.Objects;
 
 @SpringComponent
+@UIScope
 @Route("ui")
 public class MainView extends HorizontalLayout {
 
@@ -39,19 +45,29 @@ public class MainView extends HorizontalLayout {
     private Map<Integer, Component> currentFloor = Maps.newHashMap();
 
     private ElevatorsApi elevatorsApi;
+    private UIEventsHandler uiEventsHandler;
+
+    @Override
+    protected void onAttach(AttachEvent attachEvent) {
+        super.onAttach(attachEvent);
+    }
 
     @Autowired
-    public MainView(ElevatorsApi elevatorsApi, @Value("${server.port}") Integer serverPort) throws IOException {
+    public MainView(ElevatorsApi elevatorsApi, UIEventsHandler uiEventsHandler, @Value("${server.port}") Integer serverPort) throws IOException {
 
         this.elevatorsApi = elevatorsApi;
-
-        Response<Void> subcribeResponse =
-                elevatorsApi.subscribeOnElevatorEvents(new InlineObject().callbackUrl("http://localhost:" + serverPort +
-                        "/v1" +
-                        "/events" +
-                        "/elevator")).execute();
-        if (!subcribeResponse.isSuccessful()) {
-            Notification.show("Не удалось подключиться к эмулятору лифта! Попробуйте обновить страницу", 10, Notification.Position.TOP_CENTER);
+        this.uiEventsHandler = uiEventsHandler;
+        this.uiEventsHandler.setMainView(this);
+        boolean subscribe = false;
+        try {
+            subscribe = elevatorsApi.subscribeOnElevatorEvents(
+                    new InlineObject().callbackUrl("http://localhost:" + serverPort + "/v1" + "/events" + "/elevator")
+                            .id(VaadinSession.getCurrent().getSession().getId())).execute().isSuccessful();
+        } catch (Exception e) {
+            log.warn("Can't subscribe on elevator events!");
+        }
+        if (!subscribe) {
+            Notification.show("Не удалось подключиться к эмулятору лифта! Попробуйте обновить страницу", 0, Notification.Position.MIDDLE);
         } else {
 
             VerticalLayout passengerElevatorLayout = new VerticalLayout();
