@@ -14,9 +14,6 @@ public class UIEventsHandler {
 
     private SimulationView mainView;
 
-    public UIEventsHandler() {
-    }
-
     @PostMapping("v1/events/elevator")
     public void elevatorEvent(@RequestBody ElevatorEvent elevatorEvent) {
 

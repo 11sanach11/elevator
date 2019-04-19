@@ -37,7 +37,7 @@ public class SimulationView extends VerticalLayout {
     private Map<Integer, Map<Integer, VerticalLayout>> floorsElevatorsLayout = Maps.newConcurrentMap();
     private Map<Integer, VerticalLayout> currentCabinFloorForElevator = Maps.newConcurrentMap();
 
-    private UIEventsHandler uiEventsHandler;
+    transient private UIEventsHandler uiEventsHandler;
 
     @Autowired
     public SimulationView(ElevatorsApi elevatorsApi, ElevatorHandler handler, UIEventsHandler uiEventsHandler, @Value("${server.port}") Integer serverPort) throws IOException {
@@ -68,12 +68,10 @@ public class SimulationView extends VerticalLayout {
                         floorsButtonLayout = new HorizontalLayout();
                         elevatorLayout.add(floorsButtonLayout);
                     }
-                    Button floorButton = new Button(Integer.valueOf(floor).toString());
+                    Button floorButton = new Button(Integer.toString(floor));
                     int finalFloor = floor;
-                    floorButton.addClickListener(event -> {
-                        handler.positionRequestForElevator(elevator.getId(), finalFloor, DirectionForFloorDestination.NO_MATTER);
-                    });
-                    floorsButtonLayout.add(floorButton);
+                    floorButton.addClickListener(event -> handler.positionRequestForElevator(elevator.getId(), finalFloor, DirectionForFloorDestination.NO_MATTER));
+                    Optional.ofNullable(floorsButtonLayout).ifPresent(layout -> layout.add(floorButton));
                 }
             }
             //считаю, что количество этажей для каждого лифта одинаково, и беру значения этажности только из одного
@@ -103,18 +101,14 @@ public class SimulationView extends VerticalLayout {
                     Button buttonUp = new Button();
                     buttonUp.setIcon(VaadinIcon.ARROW_CIRCLE_UP.create());
                     int finalFloorUp = floor;
-                    buttonUp.addClickListener(event -> {
-                        handler.positionRequestForFloor(finalFloorUp, DirectionForFloorDestination.UP);
-                    });
+                    buttonUp.addClickListener(event -> handler.positionRequestForFloor(finalFloorUp, DirectionForFloorDestination.UP));
                     buttonLayout.add(buttonUp);
                 }
                 if (floor != lastFloor) {
                     Button buttonDown = new Button();
                     buttonDown.setIcon(VaadinIcon.ARROW_CIRCLE_DOWN.create());
                     int finalFloorDown = floor;
-                    buttonDown.addClickListener(event -> {
-                        handler.positionRequestForFloor(finalFloorDown, DirectionForFloorDestination.DOWN);
-                    });
+                    buttonDown.addClickListener(event -> handler.positionRequestForFloor(finalFloorDown, DirectionForFloorDestination.DOWN));
                     buttonLayout.add(buttonDown);
                 }
                 floorLayout.add(buttonLayout);
@@ -148,9 +142,9 @@ public class SimulationView extends VerticalLayout {
 
     public void updateFloorForElevator(ElevatorEvent event) {
         log.info("event from emulator: {}", event.getDescription());
-        getUI().ifPresent(ui -> ui.access(() -> {
-            updateElevatorCabinPresentation(event.getId(), event.getOnFloor());
-        }));
+        getUI().ifPresent(ui -> {
+            ui.access(() -> updateElevatorCabinPresentation(event.getId(), event.getOnFloor()));
+        });
     }
 
 }

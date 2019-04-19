@@ -71,6 +71,4 @@ public class ElevatorUtils {
         log.warn("хитрый алгоритм добавления этажа по \"пути\", если это возможно, а пока просто добавляю этаж в конец, что конечно неправильно");
         destinationQueue.add(addingFloor);
     }
-
-    ;
 }
