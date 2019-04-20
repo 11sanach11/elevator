@@ -6,8 +6,11 @@ import men.chikagostory.elevator.model.Position;
 import org.apache.commons.lang3.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.CollectionUtils;
 
+import javax.validation.constraints.NotNull;
 import java.util.LinkedList;
+import java.util.Objects;
 import java.util.function.BiFunction;
 
 public class ElevatorUtils {
@@ -31,7 +34,7 @@ public class ElevatorUtils {
             } else {
                 info.setState(RandomUtils.nextBoolean() ? Position.StateEnum.UP : Position.StateEnum.DOWN);
             }
-            info.setNextFloor(initialFloor + (1 * (info.getState() == Position.StateEnum.UP ? 1 : -1)));
+            info.setNextFloor(initialFloor + (info.getState() == Position.StateEnum.UP ? 1 : -1));
             if (info.getState() == Position.StateEnum.UP) {
                 firstDestination = RandomUtils.nextInt(info.getPreviousFloor(), lastFloor + 1);
             } else {
@@ -63,12 +66,57 @@ public class ElevatorUtils {
     }
 
     /**
-     * Поведение, которое будет использоваться при добавлении нового этажа в очередь лифта. По умолчанию выполняется код из {@link ElevatorUtils}
+     * Добавить в очередь остановок лифта новый этаж
+     *
+     * @param destinationQueue очередь остановок для лифта
+     * @param addingFloor      этаж, на котором требуется добавить остановку
+     * @param currentState текущее состояние кабины лифта
+     * @param currentFloor текущий этаж, на котором находится кабина лифта
+     * @param requestDirection направление движения, которое необходимо при достижении требуемого этажа
      */
-    public static void addDestinationFloor(LinkedList<Integer> destinationQueue, int addingFloor, Position.StateEnum currentState,
-                                           DirectionForFloorDestination requestDirection) {
-        //хитрый алгоритм добавления этажа по "пути", если это возможно, а пока просто добавляю этаж в конец, что конечно неправильно
-        log.warn("хитрый алгоритм добавления этажа по \"пути\", если это возможно, а пока просто добавляю этаж в конец, что конечно неправильно");
-        destinationQueue.add(addingFloor);
+    public static void addDestinationFloor(@NotNull LinkedList<Integer> destinationQueue, int addingFloor, Position.StateEnum currentState, int currentFloor,
+                                           @NotNull DirectionForFloorDestination requestDirection) {
+        // в пустую очередь достаточно добавить новую запись.
+        if (CollectionUtils.isEmpty(destinationQueue)) {
+            destinationQueue.add(addingFloor);
+        } else {
+            switch (requestDirection) {
+                case NO_MATTER:
+                    int floor1 = currentFloor;
+                    //если этаж уже в очереди - ничего добавлять не нужно
+                    boolean floorAlreadyInQueue = false;
+                    int i;
+                    for (i = 0; i < destinationQueue.size(); i++) {
+                        int floor2 = destinationQueue.get(i);
+                        //заново добавлять этаж, на котором уже запланирована остановка, не нужно
+                        if (Objects.equals(addingFloor, floor2)) {
+                            floorAlreadyInQueue = true;
+                            break;
+                        }
+                        if (destinationBetween(addingFloor, floor1, floor2)) {
+                            break;
+                        }
+                        floor1 = floor2;
+                    }
+                    if (!floorAlreadyInQueue) {
+                        destinationQueue.add(i, addingFloor);
+                    }
+                    break;
+                case UP:
+
+                    break;
+                case DOWN:
+                    break;
+            }
+        }
+        log.trace("Updated destination queue: {}", destinationQueue);
+    }
+
+    private static boolean destinationBetween(int destination, int floor1, int floor2) {
+        if (floor1 < floor2) {
+            return floor1 < destination && destination < floor2;
+        } else {
+            return floor2 < destination && destination < floor1;
+        }
     }
 }

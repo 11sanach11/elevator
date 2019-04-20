@@ -136,7 +136,7 @@ public class SimulationView extends VerticalLayout {
 
     private Icon getCabinFloorIcon(boolean empty) {
         Icon cabinIcon = empty ? VaadinIcon.THIN_SQUARE.create() : VaadinIcon.STOP.create();
-        cabinIcon.setSize("80%");
+        cabinIcon.setSize("40%");
         return cabinIcon;
     }
 

@@ -22,13 +22,6 @@ public class ElevatorStubTest {
     }
 
     @Test
-    public void simpleTest() throws InterruptedException {
-        elevatorStub.startEmulation();
-        Thread.sleep(1000);
-        elevatorStub.stopEmulation();
-    }
-
-    @Test
     public void beginFromSTAYTest() throws InterruptedException {
         AtomicInteger destFloor = new AtomicInteger();
         elevatorStub.setInitMotionFunc((firstFloor, lastFloor) -> {

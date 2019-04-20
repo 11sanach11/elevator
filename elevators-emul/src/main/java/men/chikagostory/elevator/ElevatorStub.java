@@ -83,7 +83,7 @@ public class ElevatorStub {
     }
 
     @PostConstruct
-    public ElevatorStub startEmulation() {
+    public void startEmulation() {
         stopEmulation = false;
         emulationThread = new Thread(() -> {
             MotionInfo info = Optional.ofNullable(initMotionFunc).orElse(ElevatorUtils.randomMotionInfo).apply(firstFloor, lastFloor);
@@ -174,7 +174,6 @@ public class ElevatorStub {
         emulationThread.setName("el_" + id);
         emulationThread.setDaemon(true);
         emulationThread.start();
-        return this;
     }
 
     public void addNewDestination(int toFloor, DirectionForFloorDestination direction) {
@@ -182,7 +181,7 @@ public class ElevatorStub {
         Assert.isTrue(toFloor <= lastFloor, "can't go to the sky");
         Assert.notNull(emulationThread, "Emulation thread is null, it's impossible");
         currentState.updateAndGet(current -> {
-            ElevatorUtils.addDestinationFloor(current.getDestinationQueue(), toFloor, current.getState(), direction);
+            ElevatorUtils.addDestinationFloor(current.getDestinationQueue(), toFloor, current.getState(), current.getNextFloor(), direction);
             return current;
         });
         if (!onPause) {
