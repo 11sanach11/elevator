@@ -10,14 +10,25 @@ buildscript {
 
 plugins {
     id 'java'
+    id 'jacoco'
     id "org.sonarqube" version "2.7"
 }
+
+project.tasks["sonarqube"].dependsOn "jacocoTestReport"
 sonarqube {
     properties {
         property "sonar.host.url", "http://localhost:9000"
         property "sonar.verbose", "true"
     }
 }
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+    }
+}
+test.finalizedBy jacocoTestReport
+
+check.dependsOn jacocoTestReport
 allprojects {
     group = 'men.chikagostory'
     version = '0.0.1'

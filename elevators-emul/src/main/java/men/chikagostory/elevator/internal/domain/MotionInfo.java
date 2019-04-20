@@ -1,11 +1,13 @@
 package men.chikagostory.elevator.internal.domain;
 
+import lombok.Builder;
 import lombok.Data;
 import men.chikagostory.elevator.model.Position;
 
 import java.util.LinkedList;
 
 @Data
+@Builder
 public class MotionInfo {
     /**
      * ID лифта

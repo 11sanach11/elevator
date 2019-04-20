@@ -10,6 +10,7 @@ import org.springframework.util.CollectionUtils;
 
 import javax.validation.constraints.NotNull;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
 
@@ -67,46 +68,37 @@ public class ElevatorUtils {
 
     /**
      * Добавить в очередь остановок лифта новый этаж
-     *
-     * @param destinationQueue очередь остановок для лифта
+     *  @param destinationQueue очередь остановок для лифта
      * @param addingFloor      этаж, на котором требуется добавить остановку
-     * @param currentState текущее состояние кабины лифта
-     * @param currentFloor текущий этаж, на котором находится кабина лифта
+     * @param currentFloor     текущий этаж, на котором находится кабина лифта
      * @param requestDirection направление движения, которое необходимо при достижении требуемого этажа
      */
-    public static void addDestinationFloor(@NotNull LinkedList<Integer> destinationQueue, int addingFloor, Position.StateEnum currentState, int currentFloor,
+    public static void addDestinationFloor(@NotNull List<Integer> destinationQueue, int addingFloor, int currentFloor,
                                            @NotNull DirectionForFloorDestination requestDirection) {
         // в пустую очередь достаточно добавить новую запись.
         if (CollectionUtils.isEmpty(destinationQueue)) {
             destinationQueue.add(addingFloor);
         } else {
-            switch (requestDirection) {
-                case NO_MATTER:
-                    int floor1 = currentFloor;
-                    //если этаж уже в очереди - ничего добавлять не нужно
-                    boolean floorAlreadyInQueue = false;
-                    int i;
-                    for (i = 0; i < destinationQueue.size(); i++) {
-                        int floor2 = destinationQueue.get(i);
-                        //заново добавлять этаж, на котором уже запланирована остановка, не нужно
-                        if (Objects.equals(addingFloor, floor2)) {
-                            floorAlreadyInQueue = true;
-                            break;
-                        }
-                        if (destinationBetween(addingFloor, floor1, floor2)) {
-                            break;
-                        }
-                        floor1 = floor2;
+            //если этаж уже в очереди - ничего добавлять не нужно
+            boolean floorAlreadyInQueue = false;
+            int i;
+            int floor1 = currentFloor;
+            for (i = 0; i < destinationQueue.size(); i++) {
+                int floor2 = destinationQueue.get(i);
+                //заново добавлять этаж, на котором уже запланирована остановка, не нужно
+                if (preferDirection(requestDirection, floor1, floor2)) {
+                    if (Objects.equals(addingFloor, floor2)) {
+                        floorAlreadyInQueue = true;
+                        break;
                     }
-                    if (!floorAlreadyInQueue) {
-                        destinationQueue.add(i, addingFloor);
+                    if (destinationBetween(addingFloor, floor1, floor2)) {
+                        break;
                     }
-                    break;
-                case UP:
-
-                    break;
-                case DOWN:
-                    break;
+                    floor1 = floor2;
+                }
+            }
+            if (!floorAlreadyInQueue) {
+                destinationQueue.add(i, addingFloor);
             }
         }
         log.trace("Updated destination queue: {}", destinationQueue);
@@ -117,6 +109,14 @@ public class ElevatorUtils {
             return floor1 < destination && destination < floor2;
         } else {
             return floor2 < destination && destination < floor1;
+        }
+    }
+
+    private static boolean preferDirection(DirectionForFloorDestination requiredDirection, int floor1, int floor2) {
+        if (requiredDirection == DirectionForFloorDestination.NO_MATTER) {
+            return true;
+        } else {
+            return requiredDirection == DirectionForFloorDestination.UP ? floor1 < floor2 : floor2 > floor1;
         }
     }
 }
