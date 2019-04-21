@@ -71,7 +71,10 @@ public class SimulationView extends VerticalLayout {
                     new InlineObject().callbackUrl("http://localhost:" + serverPort + "/v1" + "/events" + "/elevator")
                             .id(VaadinSession.getCurrent().getSession().getId())).execute().isSuccessful();
         } catch (Exception e) {
-            throw new RuntimeException("Can't get into from emul elevator service", e);
+            log.error("Can't get into from emul elevator service", e);
+            Notification.show("Не удается получить информацию с эмулятора лифта. Проверьте запущен ли он. Для продолжение перезапустите страницу.", 0,
+                    Notification.Position.MIDDLE);
+            return;
         }
         HorizontalLayout floorsElevatorButtonsLayout = new HorizontalLayout();
         add(floorsElevatorButtonsLayout);
