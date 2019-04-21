@@ -2,12 +2,14 @@ package men.chikagostory.elevator.internal.domain;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.experimental.Wither;
 import men.chikagostory.elevator.model.Position;
 
 import java.util.LinkedList;
 
 @Data
 @Builder
+@Wither
 public class MotionInfo {
     /**
      * ID лифта
@@ -28,9 +30,9 @@ public class MotionInfo {
     /**
      * Очередь будущих этажей, на которые должна попасть кабина
      */
-    private LinkedList<Integer> destinationQueue = new LinkedList<>();
+    private LinkedList<Integer> destinationQueue;
     /**
      * Время, которое будет выполняться следующий цикл работы лифта.
      */
-    private int delay = 0;
+    private int delay;
 }

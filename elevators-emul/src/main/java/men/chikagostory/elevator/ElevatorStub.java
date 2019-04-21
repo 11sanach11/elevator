@@ -85,26 +85,29 @@ public class ElevatorStub {
     @PostConstruct
     public void startEmulation() {
         stopEmulation = false;
+        MotionInfo info = Optional.ofNullable(initMotionFunc).orElse(ElevatorUtils.randomMotionInfo).apply(firstFloor, lastFloor);
+        info.setId(id);
+        log.info("Start state for elevator #{} {}: {}", id, name, info);
+        currentState.set(info);
         emulationThread = new Thread(() -> {
-            MotionInfo info = Optional.ofNullable(initMotionFunc).orElse(ElevatorUtils.randomMotionInfo).apply(firstFloor, lastFloor);
-            info.setId(id);
-            log.info("Start state for elevator #{} {}: {}", id, name, info);
-            currentState.set(info);
             try {
                 while (!Thread.interrupted() && !stopEmulation) {
-                    while (!CollectionUtils.isEmpty(currentState.get().getDestinationQueue())) {
+                    while (!CollectionUtils.isEmpty(currentState.get().getDestinationQueue()) && !onPause) {
                         MotionInfo newState = currentState.updateAndGet(oldState -> {
-                            MotionInfo state =
-                                    MotionInfo.builder().id(oldState.getId()).delay(oldState.getDelay()).nextFloor(oldState.getNextFloor()).
-                                            previousFloor(oldState.getPreviousFloor()).state(oldState.getState()).destinationQueue(Lists.newLinkedList
-                                            (oldState.getDestinationQueue())).build();
+                            MotionInfo state = oldState.withDestinationQueue(Lists.newLinkedList(oldState.getDestinationQueue()));
                             Integer nextDestination = state.getDestinationQueue().peek();
                             //Если следующий этаж совпадает с этажом назначения - нужна дополнительная логика
                             if (Objects.equals(nextDestination, state.getNextFloor())) {
                                 //Если текущее состояние - остановка - нужно кабину двинуть дальше в соответствии с состоянием очереди
                                 if (state.getState() == Position.StateEnum.STAY) {
                                     int previousDestination = state.getDestinationQueue().pollFirst();
-                                    Optional.ofNullable(state.getDestinationQueue().peek()).ifPresent(newDestination -> {
+                                    Integer rawDestination = state.getDestinationQueue().peek();
+                                    if (Objects.equals(rawDestination, previousDestination)) {
+                                        log.debug("Remove repeated floor destination in extremum...");
+                                        state.getDestinationQueue().pollFirst();
+                                        rawDestination = state.getDestinationQueue().peek();
+                                    }
+                                    Optional.ofNullable(rawDestination).ifPresent(newDestination -> {
                                         state.setDelay(changeStateDuration);
                                         state.setPreviousFloor(previousDestination);
                                         if (newDestination > previousDestination) {
@@ -172,7 +175,7 @@ public class ElevatorStub {
                     LockSupport.park();
                 }
             } catch (InterruptedException e) {
-                log.info("Interrupt execution: {}", e.getMessage());
+                log.info("Interrupt execution:", e);
             }
         });
         emulationThread.setName("el_" + id);
@@ -180,7 +183,14 @@ public class ElevatorStub {
         emulationThread.start();
     }
 
+    /**
+     * Добавить в очередь еще один этаж
+     *
+     * @param toFloor   на какой этаж нужно доставить лифт
+     * @param direction требуемое направление движения лифта после посадки, не должно быть null
+     */
     public void addNewDestination(int toFloor, DirectionForFloorDestination direction) {
+        Assert.notNull(direction, "direction can't be null");
         Assert.isTrue(toFloor >= firstFloor, "can't go underground");
         Assert.isTrue(toFloor <= lastFloor, "can't go to the sky");
         if (toFloor == firstFloor && direction == DirectionForFloorDestination.DOWN) {
@@ -191,8 +201,9 @@ public class ElevatorStub {
         }
         Assert.notNull(emulationThread, "Emulation thread is null, it's impossible");
         currentState.updateAndGet(current -> {
-            ElevatorUtils.addDestinationFloor(current.getDestinationQueue(), toFloor, current.getNextFloor(), direction);
-            return current;
+            MotionInfo newState = current.withDestinationQueue(Lists.newLinkedList(current.getDestinationQueue()));
+            ElevatorUtils.addDestinationFloor(newState.getDestinationQueue(), toFloor, newState.getNextFloor(), direction);
+            return newState;
         });
         if (!onPause) {
             LockSupport.unpark(emulationThread);
@@ -217,7 +228,8 @@ public class ElevatorStub {
         } else {
             int first = currentFloor;
             int headOfDestinationQueue = destinationQueue.get(0);
-            DirectionForFloorDestination currentDirection = currentFloor < headOfDestinationQueue ? DirectionForFloorDestination.UP : DirectionForFloorDestination.DOWN;
+            DirectionForFloorDestination currentDirection = currentFloor < headOfDestinationQueue ? DirectionForFloorDestination.UP :
+                    DirectionForFloorDestination.DOWN;
             for (int last : destinationQueue) {
                 //при изменении направления найдется первый локальный экстремум
                 if ((currentDirection == DirectionForFloorDestination.UP && first > last) || (currentDirection == DirectionForFloorDestination.DOWN && first < last)) {
@@ -230,13 +242,20 @@ public class ElevatorStub {
     }
 
     private DirectionForFloorDestination defineDirection(int currentFloor, int maxFloorInLoop) {
-
+        if (currentFloor == maxFloorInLoop) {
+            return DirectionForFloorDestination.NO_MATTER;
+        } else if (currentFloor < maxFloorInLoop) {
+            return DirectionForFloorDestination.UP;
+        } else {
+            return DirectionForFloorDestination.DOWN;
+        }
     }
 
     public Position getPosition() {
         MotionInfo state = currentState.get();
+        int maxFloorLoop = getExtremumFloorInLoop(state.getNextFloor(), state.getDestinationQueue());
         return new Position().nextFloor(state.getNextFloor()).previousFloor(state.getPreviousFloor()).state(state.getState()).
-                maxFloorInLoop(getExtremumFloorInLoop(state.getNextFloor(), state.getDestinationQueue()));
+                maxFloorInLoop(maxFloorLoop).direction(defineDirection(state.getNextFloor(), maxFloorLoop));
     }
 
     public void stopEmulation() {
@@ -265,8 +284,11 @@ public class ElevatorStub {
         nextStepListeners.remove(listener);
     }
 
+    public List<Integer> getCurrentDestinationQueue() {
+        return Lists.newArrayList(currentState.get().getDestinationQueue());
+    }
+
     public interface NextStepListener {
         void onNextStep(MotionInfo info);
     }
-
 }

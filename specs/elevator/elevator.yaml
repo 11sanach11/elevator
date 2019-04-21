@@ -181,13 +181,13 @@ components:
           format: int32
           description: time in milliseconds which elevator can go the distance between floors
           minimum: 1
-          maximum: 100
+          maximum: 10000
         changeStateDuration:
           type: integer
           format: int32
           description: time in milliseconds which elevator change own state
           minimum: 1
-          maximum: 100
+          maximum: 10000
     Position:
       properties:
         state:

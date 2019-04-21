@@ -35,6 +35,7 @@ ext {
 
 test {
     useJUnitPlatform()
+    ignoreFailures = true
 }
 
 dependencies {
@@ -47,8 +48,12 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.6'
     // https://mvnrepository.com/artifact/org.apache.commons/commons-lang3
     compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.8.1'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.junit.jupiter:junit-jupiter-api:5.3.1'
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.1'
+//    testImplementation 'org.mockito:mockito-all:1.10.19'
+    testImplementation 'org.mockito:mockito-junit-jupiter:2.23.0'
+    testImplementation 'org.awaitility:awaitility:3.0.0'
 }
 
 compileJava {

@@ -53,6 +53,11 @@ compileJava {
     dependsOn tasks.openApiGenerate
 }
 
+test {
+    useJUnitPlatform()
+    ignoreFailures = true
+}
+
 dependencyManagement {
     imports {
         mavenBom "com.vaadin:vaadin-bom:${vaadinVersion}"

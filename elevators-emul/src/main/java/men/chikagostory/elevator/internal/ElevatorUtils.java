@@ -1,5 +1,6 @@
 package men.chikagostory.elevator.internal;
 
+import com.google.common.collect.Lists;
 import men.chikagostory.elevator.internal.domain.MotionInfo;
 import men.chikagostory.elevator.model.DirectionForFloorDestination;
 import men.chikagostory.elevator.model.Position;
@@ -9,7 +10,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 
 import javax.validation.constraints.NotNull;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
@@ -22,7 +22,7 @@ public class ElevatorUtils {
      * не может быть 7 этаж.
      */
     public static final BiFunction<Integer, Integer, MotionInfo> randomMotionInfo = (firstFloor, lastFloor) -> {
-        MotionInfo info = new MotionInfo();
+        MotionInfo info = MotionInfo.builder().destinationQueue(Lists.newLinkedList()).build();
         int initialFloor = RandomUtils.nextInt(firstFloor, lastFloor + 1);
         int firstDestination;
         info.setPreviousFloor(initialFloor);
@@ -37,7 +37,7 @@ public class ElevatorUtils {
             }
             info.setNextFloor(initialFloor + (info.getState() == Position.StateEnum.UP ? 1 : -1));
             if (info.getState() == Position.StateEnum.UP) {
-                firstDestination = RandomUtils.nextInt(info.getPreviousFloor(), lastFloor + 1);
+                firstDestination = RandomUtils.nextInt(info.getNextFloor(), lastFloor + 1);
             } else {
                 firstDestination = RandomUtils.nextInt(firstFloor, info.getPreviousFloor());
             }
@@ -68,7 +68,8 @@ public class ElevatorUtils {
 
     /**
      * Добавить в очередь остановок лифта новый этаж
-     *  @param destinationQueue очередь остановок для лифта
+     *
+     * @param destinationQueue очередь остановок для лифта
      * @param addingFloor      этаж, на котором требуется добавить остановку
      * @param currentFloor     текущий этаж, на котором находится кабина лифта
      * @param requestDirection направление движения, которое необходимо при достижении требуемого этажа
@@ -82,20 +83,30 @@ public class ElevatorUtils {
             //если этаж уже в очереди - ничего добавлять не нужно
             boolean floorAlreadyInQueue = false;
             int i;
+            Integer prevFloor = null;
             int floor1 = currentFloor;
             for (i = 0; i < destinationQueue.size(); i++) {
                 int floor2 = destinationQueue.get(i);
-                //заново добавлять этаж, на котором уже запланирована остановка, не нужно
                 if (preferDirection(requestDirection, floor1, floor2)) {
-                    if (Objects.equals(addingFloor, floor2)) {
+                    if (Objects.equals(addingFloor, floor2)) {//заново добавлять этаж, на котором уже запланирована остановка, не нужно
                         floorAlreadyInQueue = true;
                         break;
                     }
                     if (destinationBetween(addingFloor, floor1, floor2)) {
                         break;
                     }
-                    floor1 = floor2;
                 }
+                if (isAddNewExtremum(addingFloor, prevFloor, floor1, floor2)) {
+                    floorAlreadyInQueue = isAddedFloorEqualsItEnvironment(addingFloor, floor1, floor2);
+                    break;
+                }
+                // Третья остановка в пртивоположном направлении - не нужна.
+                if (isAddedFloorEqualsItEnvironment(addingFloor, floor1, floor2)) {
+                    floorAlreadyInQueue = true;
+                    break;
+                }
+                prevFloor = floor1;
+                floor1 = floor2;
             }
             if (!floorAlreadyInQueue) {
                 destinationQueue.add(i, addingFloor);
@@ -104,6 +115,26 @@ public class ElevatorUtils {
         log.trace("Updated destination queue: {}", destinationQueue);
     }
 
+    /**
+     * Проверка что добавляемый этаж и его окружение - один и тот же этаж
+     *
+     * @param addingFloor добавляемый этаж
+     * @param floor1      предыдущий в очереди
+     * @param floor2      следующий в очереди
+     * @return
+     */
+    private static boolean isAddedFloorEqualsItEnvironment(int addingFloor, int floor1, int floor2) {
+        return addingFloor == floor1 && floor1 == floor2;
+    }
+
+    /**
+     * Проверка того, что этаж назначения находится между другими
+     *
+     * @param destination проверяемый этаж
+     * @param floor1
+     * @param floor2
+     * @return
+     */
     private static boolean destinationBetween(int destination, int floor1, int floor2) {
         if (floor1 < floor2) {
             return floor1 < destination && destination < floor2;
@@ -112,11 +143,46 @@ public class ElevatorUtils {
         }
     }
 
+    /**
+     * Направление, в котором сейчас движется кабина лифта, совпадает с тем, которое необходимо клиенту
+     *
+     * @param requiredDirection требуемое направление движения
+     * @param floor1            этаж, с которого движется кабина лифта
+     * @param floor2            этаж, на который движется кабина
+     * @return
+     */
     private static boolean preferDirection(DirectionForFloorDestination requiredDirection, int floor1, int floor2) {
         if (requiredDirection == DirectionForFloorDestination.NO_MATTER) {
             return true;
         } else {
-            return requiredDirection == DirectionForFloorDestination.UP ? floor1 < floor2 : floor2 > floor1;
+            return requiredDirection == DirectionForFloorDestination.UP ? floor1 < floor2 : floor1 > floor2;
         }
+    }
+
+    /**
+     * Проверить, можно ли добавить добавляемый этаж, сместив текущий экстремум
+     *
+     * @param destination      добавляемый этаж
+     * @param wrappedPrevFloor -1 этаж в цепочке (для определения движения лифта), может быть null
+     * @param floor1           этаж, с которого едет кабина
+     * @param floor2           этаж, на который едет кабина
+     * @return
+     */
+    private static boolean isAddNewExtremum(int destination, Integer wrappedPrevFloor, int floor1, int floor2) {
+        if (wrappedPrevFloor != null) {
+            int prevFloor = wrappedPrevFloor;
+            if (inLocalMinimum(destination, floor1, floor2, prevFloor) || inLocalMaximum(destination, floor1, floor2, prevFloor)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean inLocalMaximum(int destination, int floor1, int floor2, int prevFloor) {
+        return (prevFloor < floor1 && floor1 <= destination && destination >= floor2) && !(prevFloor < floor1 && floor1 < floor2);
+    }
+
+    private static boolean inLocalMinimum(int destination, int floor1, int floor2, int prevFloor) {
+        return (prevFloor > floor1 && floor1 >= destination && destination <= floor2) && !(prevFloor > floor1 && floor1 > floor2);
     }
 }
