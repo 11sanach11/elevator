@@ -54,7 +54,7 @@ compileJava {
 }
 
 test {
-    useJUnitPlatform()
+    
     ignoreFailures = true
 }
 
